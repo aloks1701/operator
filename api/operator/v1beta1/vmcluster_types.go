@@ -134,6 +134,16 @@ func (d *VMClusterDiscovery) enabled() bool {
 	return d != nil && d.Enabled
 }
 
+// podDNSAddress formats pod dns address with optional domain name.
+// It must stay in sync with build.PodDNSAddress, which cannot be imported
+// here without creating an import cycle.
+func podDNSAddress(baseName string, podIndex int32, namespace string, portName string, domain string) string {
+	if domain == "" {
+		return fmt.Sprintf("%s-%d.%s.%s:%s", baseName, podIndex, baseName, namespace, portName)
+	}
+	return fmt.Sprintf("%s-%d.%s.%s.svc.%s:%s", baseName, podIndex, baseName, namespace, domain, portName)
+}
+
 func (d *VMClusterDiscovery) validate() error {
 	if len(d.Filter) > 0 {
 		if _, err := regexp.Compile(d.Filter); err != nil {
@@ -401,7 +411,21 @@ type VMSelect struct {
 	// +optional
 	Discovery *VMClusterDiscovery `json:"discovery,omitempty"`
 
+	// ExtraStorageNodes - defines additional storage nodes to VMSelect,
+	// available for select only. Useful for adding an existing vmsingle nodes
+	// to the cluster in a read-only mode.
+	// +optional
+	// +notes={available_from: "v0.74.0"}
+	ExtraStorageNodes []VMStorageNode `json:"extraStorageNodes,omitempty"`
+
 	CommonAppsParams `json:",inline"`
+}
+
+// VMStorageNode defines an additional, non-operator-managed vmstorage node
+type VMStorageNode struct {
+	// Addr defines storage node address
+	// +kubebuilder:validation:MinLength=1
+	Addr string `json:"addr"`
 }
 
 type InsertPorts struct {
@@ -746,6 +770,31 @@ func (cr *VMCluster) Validate() error {
 		}
 		if err := vms.Validate(); err != nil {
 			return fmt.Errorf("vmselect: %w", err)
+		}
+		storageNodes := sets.New[string]()
+		if cr.Spec.VMStorage != nil && !vms.Discovery.OrDefault(cr.Spec.Discovery).enabled() {
+			storageName := cr.PrefixedName(ClusterComponentStorage)
+			for _, idx := range cr.AvailableStorageNodeIDs(ClusterComponentSelect) {
+				storageNodes.Insert(podDNSAddress(storageName, idx, cr.Namespace, cr.Spec.VMStorage.VMSelectPort, cr.Spec.ClusterDomainName))
+			}
+		}
+		if nodes, ok := vms.ExtraArgs["storageNode"]; ok {
+			for _, node := range strings.Split(nodes, ",") {
+				node = strings.TrimSpace(node)
+				if storageNodes.Has(node) {
+					return fmt.Errorf("encountered storageNode=%s multiple times, please make all storage node addresses are unique", node)
+				}
+				storageNodes.Insert(node)
+			}
+		}
+		for _, node := range vms.ExtraStorageNodes {
+			if len(node.Addr) == 0 {
+				return fmt.Errorf("extraStorageNodes[].addr cannot be empty")
+			}
+			if storageNodes.Has(node.Addr) {
+				return fmt.Errorf("encountered storageNode=%s multiple times, please make all storage node addresses are unique", node.Addr)
+			}
+			storageNodes.Insert(node.Addr)
 		}
 	}
 	if cr.Spec.VMInsert != nil {

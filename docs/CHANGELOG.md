@@ -13,6 +13,8 @@ aliases:
 
 ## tip
 
+* FEATURE: [vmcluster](https://docs.victoriametrics.com/operator/resources/vmcluster/): support VMCluster extraStorageNodes for vmselect component
+
 ## [v0.73.0](https://github.com/VictoriaMetrics/operator/releases/tag/v0.73.0)
 **Release date:** 07 July 2026
 

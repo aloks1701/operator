@@ -33485,6 +33485,23 @@ spec:
                           x-kubernetes-map-type: atomic
                       type: object
                     type: array
+                  extraStorageNodes:
+                    description: |-
+                      ExtraStorageNodes - defines additional storage nodes to VMSelect,
+                      available for select only. Useful for adding an existing vmsingle nodes
+                      to the cluster in a read-only mode.
+                    items:
+                      description: VMStorageNode defines an additional, non-operator-managed
+                        vmstorage node
+                      properties:
+                        addr:
+                          description: Addr defines storage node address
+                          minLength: 1
+                          type: string
+                      required:
+                      - addr
+                      type: object
+                    type: array
                   host_aliases:
                     description: |-
                       HostAliasesUnderScore provides mapping for ip and hostname,
