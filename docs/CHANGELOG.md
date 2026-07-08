@@ -13,6 +13,8 @@ aliases:
 
 ## tip
 
+* FEATURE: [vlagent](https://docs.victoriametrics.com/operator/resources/vlagent/): add `basicAuth` field support to `remoteWrite` entries. See [#2371](https://github.com/VictoriaMetrics/operator/issues/2371).
+
 ## [v0.73.0](https://github.com/VictoriaMetrics/operator/releases/tag/v0.73.0)
 **Release date:** 07 July 2026
 
