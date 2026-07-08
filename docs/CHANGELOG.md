@@ -13,6 +13,8 @@ aliases:
 
 ## tip
 
+* FEATURE: [vmuser](https://docs.victoriametrics.com/operator/resources/vmuser/): add `defaultVMAccessClaim` field to `spec.jwt`, mapped to vmauth's `jwt.default_vm_access_claim`. It lets a `VMUser` accept JWTs that don't carry a `vm_access` claim, matching `vmauth` v1.147.0+ behavior. See [#2375](https://github.com/VictoriaMetrics/operator/issues/2375).
+
 ## [v0.73.0](https://github.com/VictoriaMetrics/operator/releases/tag/v0.73.0)
 **Release date:** 07 July 2026
 
